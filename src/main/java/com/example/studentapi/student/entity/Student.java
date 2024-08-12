@@ -6,6 +6,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.sql.Timestamp;
 
 @NoArgsConstructor
 @Getter
@@ -19,6 +23,7 @@ public class Student {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private int id;
+
 
     @NotEmpty(message = "name is required")
     @Column(name = "student_name")
@@ -46,5 +51,11 @@ public class Student {
     @OneToOne
     @JoinColumn(name = "standard_id")
     private Standard standard;
+
+    @CreationTimestamp
+    private Timestamp createdOn;
+
+    @UpdateTimestamp
+    private Timestamp updateOn;
 
 }

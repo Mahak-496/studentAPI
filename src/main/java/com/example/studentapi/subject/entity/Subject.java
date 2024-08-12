@@ -1,6 +1,7 @@
 package com.example.studentapi.subject.entity;
 
 import com.example.studentapi.standard.entity.Standard;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;

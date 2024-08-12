@@ -9,11 +9,9 @@ import java.util.List;
 
 public interface IStandardService {
 
-
     List<StandardResponseDTO> getAllStandardDetails();
 
     StandardResponseDTO saveStandard(StandardRequestDTO standardRequestDTO);
-
 
     void deleteStandard(int id);
 

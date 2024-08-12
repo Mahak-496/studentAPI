@@ -2,13 +2,16 @@ package com.example.studentapi.student.controller;
 
 import com.example.studentapi.exceptions.StudentNotFoundException;
 import com.example.studentapi.exceptions.ValidationException;
+import com.example.studentapi.student.dto.groupStudents.GroupStudents;
 import com.example.studentapi.student.dto.request.StudentRequestDTO;
 import com.example.studentapi.student.dto.response.StudentResponseDTO;
+import com.example.studentapi.student.entity.Student;
 import com.example.studentapi.student.service.StudentService;
 import com.example.studentapi.utils.ApiResponse;
 import com.example.studentapi.utils.ResponseSender;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -171,6 +174,123 @@ public class StudentController {
                     .message(e.getMessage())
                     .statusCode(HttpStatus.BAD_REQUEST.value())
                     .build();
+            return ResponseSender.send(apiResponse);
+        }
+    }
+
+//    @GetMapping("/between")
+//    public List<StudentResponseDTO> getStudentsCreatedBetween(
+//           @Nullable @RequestParam("startDate") String startDate,
+//           @Nullable @RequestParam("endDate") String endDate) throws ParseException {
+//        Timestamp fromDate = DateUtils.fromDateToTimestamp(startDate);
+//        Timestamp toDate = DateUtils.toDateToTimestamp(endDate);
+//        return studentService.findStudentsCreatedBetween(fromDate, toDate);
+//    }
+
+//    @GetMapping("/filterStudents")
+//    public ResponseEntity<Object> getStudentsCreatedBetween(
+//            @RequestParam(value = "startDate", required = false) String startDate,
+//            @RequestParam(value = "endDate", required = false) String endDate,
+//            @RequestParam(value = "search", required = false) String search,
+//            @RequestParam(value = "standardId", required = false) Integer standardId
+//    ) {
+//        ApiResponse apiResponse;
+//
+//        try {
+//            List<StudentResponseDTO> students = studentService.findStudentsCreatedBetween(startDate, endDate,search,standardId);
+//            apiResponse = ApiResponse.builder()
+//                    .message("Students retrieved successfully")
+//                    .data(students)
+//                    .statusCode(HttpStatus.OK.value())
+//                    .build();
+//            return ResponseSender.send(apiResponse);
+//
+//        } catch (IllegalArgumentException e) {
+//            apiResponse = ApiResponse.builder()
+//                    .message("Invalid date format: " + e.getMessage())
+//                    .statusCode(HttpStatus.BAD_REQUEST.value())
+//                    .build();
+//
+//            return ResponseSender.send(apiResponse);
+//        } catch (Exception e) {
+//            apiResponse = ApiResponse.builder()
+//                    .message("An unexpected error occurred: " + e.getMessage())
+//                    .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+//                    .build();
+//            return ResponseSender.send(apiResponse);
+//        }
+//    }
+
+    @GetMapping("/GroupStudent")
+    public ResponseEntity<Object>groupStudentBasedOnClass(){
+        try {
+            List<GroupStudents> list = studentService.groupStudentBasedOnClass();
+            ApiResponse apiResponse = ApiResponse.builder()
+                    .message("Students retrieved successfully")
+                    .data(list)
+                    .statusCode(HttpStatus.OK.value())
+                    .build();
+            return ResponseSender.send(apiResponse);
+        } catch (RuntimeException e) {
+            ApiResponse apiResponse = ApiResponse.builder()
+                    .message(e.getMessage())
+                    .statusCode(HttpStatus.NOT_FOUND.value())
+                    .build();
+            return ResponseSender.send(apiResponse);
+        }
+
+    }
+
+//    @GetMapping("/page")
+//    public Page<StudentResponseDTO> getStudents(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "10") int size) {
+//        return studentService.getStudents(page, size);
+//    }
+    @GetMapping("/page")
+    public ResponseEntity<Page<StudentResponseDTO>> getProducts(
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "") int pageSize) {
+
+        Page<StudentResponseDTO> students = studentService.getStudents(pageNo, pageSize);
+        return ResponseEntity.ok(students);
+    }
+
+
+
+    @GetMapping("/filterStudents")
+    public ResponseEntity<Object> getStudentsCreatedBetween(
+            @RequestParam(value = "startDate", required = false) String startDate,
+            @RequestParam(value = "endDate", required = false) String endDate,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "standardId", required = false) Integer standardId,
+            @RequestParam(defaultValue = "0") int pageNo,
+            @RequestParam(defaultValue = "10") int pageSize)
+    {
+        ApiResponse apiResponse;
+
+        try {
+            Page<StudentResponseDTO> students = studentService.findStudentsCreatedBetween(startDate, endDate,search,standardId,pageNo,pageSize);
+            apiResponse = ApiResponse.builder()
+                    .message("Students retrieved successfully")
+                    .data(students)
+                    .statusCode(HttpStatus.OK.value())
+                    .build();
+            return ResponseSender.send(apiResponse);
+
+        } catch (IllegalArgumentException e) {
+            apiResponse = ApiResponse.builder()
+                    .message("Invalid date format: " + e.getMessage())
+                    .statusCode(HttpStatus.BAD_REQUEST.value())
+                    .build();
+
+            return ResponseSender.send(apiResponse);
+        } catch (Exception e) {
+            apiResponse = ApiResponse.builder()
+                    .message("An unexpected error occurred: " + e.getMessage())
+                    .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                    .build();
+
             return ResponseSender.send(apiResponse);
         }
     }

@@ -2,6 +2,7 @@ package com.example.studentapi.standard.entity;
 
 import com.example.studentapi.subject.entity.Subject;
 import com.example.studentapi.teacher.entity.Teacher;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
@@ -36,7 +37,7 @@ public class Standard {
 
 //    @OneToMany(mappedBy = "standard", cascade = CascadeType.ALL)
 //    private List<Teacher> teachers = new ArrayList<>();
-
+    @JsonIgnore
     @ManyToMany
     private List<Teacher> teachers = new ArrayList<>();
 
