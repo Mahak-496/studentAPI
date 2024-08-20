@@ -8,7 +8,9 @@ import com.example.studentapi.student.dto.response.StudentResponseDTO;
 import com.example.studentapi.student.entity.Student;
 import com.example.studentapi.student.service.StudentService;
 import com.example.studentapi.utils.ApiResponse;
+import com.example.studentapi.utils.CsvFileGenerator;
 import com.example.studentapi.utils.ResponseSender;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +28,8 @@ public class StudentController {
 
     @Autowired
     private StudentService studentService;
+    @Autowired
+    private CsvFileGenerator csvFileGenerator;
 
     @GetMapping("/allStudents")
     public ResponseEntity<Object> getAllStudents() {
@@ -177,6 +182,18 @@ public class StudentController {
             return ResponseSender.send(apiResponse);
         }
     }
+//    @GetMapping("/export-to-csv")
+//    public void exportIntoCSV(HttpServletResponse response) throws IOException {
+//        response.setContentType("text/csv");
+//        response.addHeader("Content-Disposition", "attachment; filename=\"student.csv\"");
+//        csvFileGenerator.writeStudentsToCsv(studentService.getAllStudents(), response.getWriter());
+//    }
+    @GetMapping("/export-to-csv")
+    public void exportIntoCSV(HttpServletResponse response) throws IOException{
+        response.setContentType("text/csv");
+        response.addHeader("Content-Disposition", "attachment; filename=\"student.csv\"");
+        csvFileGenerator.writeStudentsToCsv(studentService.getAllStudents(),response.getWriter());
+    }
 
 //    @GetMapping("/between")
 //    public List<StudentResponseDTO> getStudentsCreatedBetween(
@@ -222,7 +239,7 @@ public class StudentController {
 //    }
 
     @GetMapping("/GroupStudent")
-    public ResponseEntity<Object>groupStudentBasedOnClass(){
+    public ResponseEntity<Object> groupStudentBasedOnClass() {
         try {
             List<GroupStudents> list = studentService.groupStudentBasedOnClass();
             ApiResponse apiResponse = ApiResponse.builder()
@@ -241,7 +258,7 @@ public class StudentController {
 
     }
 
-//    @GetMapping("/page")
+    //    @GetMapping("/page")
 //    public Page<StudentResponseDTO> getStudents(
 //            @RequestParam(defaultValue = "0") int page,
 //            @RequestParam(defaultValue = "10") int size) {
@@ -257,7 +274,6 @@ public class StudentController {
     }
 
 
-
     @GetMapping("/filterStudents")
     public ResponseEntity<Object> getStudentsCreatedBetween(
             @RequestParam(value = "startDate", required = false) String startDate,
@@ -265,12 +281,11 @@ public class StudentController {
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "standardId", required = false) Integer standardId,
             @RequestParam(defaultValue = "0") int pageNo,
-            @RequestParam(defaultValue = "10") int pageSize)
-    {
+            @RequestParam(defaultValue = "10") int pageSize) {
         ApiResponse apiResponse;
 
         try {
-            Page<StudentResponseDTO> students = studentService.findStudentsCreatedBetween(startDate, endDate,search,standardId,pageNo,pageSize);
+            Page<StudentResponseDTO> students = studentService.findStudentsCreatedBetween(startDate, endDate, search, standardId, pageNo, pageSize);
             apiResponse = ApiResponse.builder()
                     .message("Students retrieved successfully")
                     .data(students)

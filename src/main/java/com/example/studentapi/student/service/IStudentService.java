@@ -3,12 +3,9 @@ package com.example.studentapi.student.service;
 import com.example.studentapi.student.dto.groupStudents.GroupStudents;
 import com.example.studentapi.student.dto.request.StudentRequestDTO;
 import com.example.studentapi.student.dto.response.StudentResponseDTO;
-import com.example.studentapi.student.entity.Student;
 import org.springframework.data.domain.Page;
 
-import java.sql.Timestamp;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public interface IStudentService {
