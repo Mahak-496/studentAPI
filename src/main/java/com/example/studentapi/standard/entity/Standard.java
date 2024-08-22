@@ -41,10 +41,6 @@ public class Standard {
     @ManyToMany
     private List<Teacher> teachers = new ArrayList<>();
 
-
-
     @OneToMany(mappedBy = "standard", cascade = CascadeType.ALL)
     private List<Subject> subjects = new ArrayList<>();
-
-
 }

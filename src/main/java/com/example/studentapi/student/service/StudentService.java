@@ -10,18 +10,28 @@ import com.example.studentapi.student.dto.response.StudentResponseDTO;
 import com.example.studentapi.student.entity.Student;
 import com.example.studentapi.student.repository.StudentRepository;
 import com.example.studentapi.student.specifications.StudentSpecification;
+import com.example.studentapi.utils.StudentExcelExporter;
 import jakarta.validation.ValidationException;
-import org.springframework.data.domain.PageImpl;
-import  org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
-//import java.awt.print.Pageable;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -34,6 +44,7 @@ public class StudentService implements IStudentService {
     private StudentRepository studentRepository;
     @Autowired
     private StandardRepository standardRepository;
+    private final String uploadDir="uploads_temp/";
 
     @Override
     public List<StudentResponseDTO> getAllStudents() {
@@ -133,15 +144,6 @@ public class StudentService implements IStudentService {
                 .collect(Collectors.toList());
     }
 
-//    @Override
-//    public List<StudentResponseDTO> findStudentsCreatedBetween(String startDate, String endDate, String search, Integer standardId) {
-//        Specification<Student> spec = StudentSpecification.createdOnBetween(startDate, endDate,search,standardId);
-//        List<Student> students=studentRepository.findAll(spec);
-//        return students.stream()
-//                .map(StudentMapper::toResponseDTO)
-//                .collect(Collectors.toList());
-//    }
-
     @Override
     public Page<StudentResponseDTO> findStudentsCreatedBetween(String startDate, String endDate, String search, Integer standardId, int pageNo, int pageSize) {
         if (startDate == null || endDate == null) {
@@ -159,7 +161,6 @@ public class StudentService implements IStudentService {
                 .collect(Collectors.toList());
         return new PageImpl<>(studentDTOs, pageable, studentPage.getTotalElements());
     }
-
 
     @Override
     public List<GroupStudents> groupStudentBasedOnClass() {
@@ -181,33 +182,66 @@ public class StudentService implements IStudentService {
                 .collect(Collectors.toList());
     }
 
-//@Override
-//    public Page<Student> getStudents(int page, int size) {
-//        Pageable pageable = PageRequest.of(page, size);
-//        return studentRepository.findAll(pageable);
-//    }
-//
-
-//    public Page<StudentResponseDTO> getStudents(int page, int size) {
-//       Pageable pageable = (Pageable) PageRequest.of(page, size);
-//        Page<Student> studentPage = studentRepository.findAll((org.springframework.data.domain.Pageable) pageable);
-//        List<Student> studentDTOs = studentPage.getContent();
-//        return (Page<StudentResponseDTO>) studentDTOs.stream().map(StudentMapper::toResponseDTO).collect(Collectors.toList());
-//
-//        }
-//
-
-    public  Page<StudentResponseDTO> getStudents(int pageNo, int pageSize) {
+    public Page<StudentResponseDTO> getStudents(int pageNo, int pageSize) {
         Pageable pageable = PageRequest.of(pageNo, pageSize);
-        Page<Student>studentPage= studentRepository.findAll(pageable);
+        Page<Student> studentPage = studentRepository.findAll(pageable);
         List<StudentResponseDTO> studentDTO = studentPage.getContent().stream()
                 .map(StudentMapper::toResponseDTO)
                 .collect(Collectors.toList());
         return new PageImpl<>(studentDTO, pageable, studentPage.getTotalElements());
     }
 
+    @Override
+    public List<Student> listAll() {
+        return studentRepository.findAll();
+    }
 
-        private void validateStudentRequestDTO(StudentRequestDTO dto) {
+    public String generateAndSaveExcel() throws IOException {
+
+        File directory = new File(uploadDir);
+
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+        System.out.println(directory.getAbsolutePath());
+        DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+        String currentDateTime = dateFormatter.format(new Date());
+
+        String fileName = "students_" +currentDateTime + ".xlsx";
+        Path filePath = Paths.get(uploadDir, fileName);
+        var signeFileLocation = String.valueOf(Paths.get(System.getProperty("user.dir"), readFilePath(fileName, true)));
+
+        List<Student> listStudents = listAll();
+
+        try (FileOutputStream outputStream = new FileOutputStream(filePath.toFile())) {
+            StudentExcelExporter excelExporter = new StudentExcelExporter(listStudents);
+            excelExporter.export(outputStream);
+            System.out.println(filePath.toAbsolutePath());
+        }
+
+        return fileName;
+    }
+    public  String readFilePath(String fileName, boolean isRead) throws IOException {
+        Path pathToFile = Paths.get(uploadDir);
+        if (!isRead) {
+            Files.createDirectories(pathToFile);
+        }
+        return pathToFile.resolve(fileName).toString();
+    }
+
+
+    /*@Override
+    public byte[] getFileContent(String filename) throws IOException {
+        Path filePath = Paths.get(uploadDir).resolve(filename);
+
+        if (Files.notExists(filePath)) {
+            throw new IOException("File not found.");
+        }
+        return Files.readAllBytes(filePath);
+
+    }*/
+
+    private void validateStudentRequestDTO(StudentRequestDTO dto) {
         if (dto.getEmail() == null || dto.getEmail().isEmpty()) {
             throw new ValidationException("Email cannot be empty");
         }
@@ -222,3 +256,5 @@ public class StudentService implements IStudentService {
         }
     }
 }
+
+

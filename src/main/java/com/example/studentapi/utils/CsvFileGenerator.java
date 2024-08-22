@@ -33,7 +33,6 @@ public class CsvFileGenerator {
                         student.getSchool(),
                         standardJson,
                         subjects
-
                 );
             }
 
