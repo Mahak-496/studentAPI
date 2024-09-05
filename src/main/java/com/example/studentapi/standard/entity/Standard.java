@@ -1,5 +1,6 @@
 package com.example.studentapi.standard.entity;
 
+import com.example.studentapi.signupAndLogin.entity.User;
 import com.example.studentapi.subject.entity.Subject;
 import com.example.studentapi.teacher.entity.Teacher;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -31,11 +32,15 @@ public class Standard {
     @Column(name = "description")
     private String description;
 
+    @ManyToOne
+    @JoinColumn(name = "headmaster_id")
+    private User headmaster;
+
 //    @ManyToOne(fetch = FetchType.EAGER)
 //    @JoinColumn(name = "teacher_id")
 //    private Teacher teacher;
 
-//    @OneToMany(mappedBy = "standard", cascade = CascadeType.ALL)
+    //    @OneToMany(mappedBy = "standard", cascade = CascadeType.ALL)
 //    private List<Teacher> teachers = new ArrayList<>();
     @JsonIgnore
     @ManyToMany

@@ -1,8 +1,11 @@
 package com.example.studentapi.standard.dto.Mapper;
 
+import com.example.studentapi.signupAndLogin.entity.User;
 import com.example.studentapi.standard.dto.Request.StandardRequestDTO;
 import com.example.studentapi.standard.dto.Response.StandardResponseDTO;
 import com.example.studentapi.standard.entity.Standard;
+import com.example.studentapi.student.dto.request.StudentRequestDTO;
+import com.example.studentapi.student.entity.Student;
 import com.example.studentapi.subject.dto.Mapper.SubjectMapper;
 import com.example.studentapi.teacher.dto.Mapper.TeacherMapper;
 
@@ -14,6 +17,16 @@ public class StandardMapper {
         return Standard.builder()
                 .name(dto.getName())
                 .description(dto.getDescription())
+                .build();
+    }
+
+
+
+    public static Standard tosaveStandardEntity(StandardRequestDTO dto, User headmaster) {
+        return Standard.builder()
+                .name(dto.getName())
+                .description(dto.getDescription())
+                .headmaster(headmaster)
                 .build();
     }
 

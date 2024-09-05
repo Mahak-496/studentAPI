@@ -2,6 +2,10 @@ package com.example.studentapi.standard.controller;
 
 import com.example.studentapi.exceptions.StandardNotFoundException;
 import com.example.studentapi.exceptions.StudentNotFoundException;
+import com.example.studentapi.exceptions.ValidationException;
+import com.example.studentapi.signupAndLogin.entity.User;
+import com.example.studentapi.signupAndLogin.repository.UserRepository;
+import com.example.studentapi.signupAndLogin.service.UserService;
 import com.example.studentapi.standard.dto.Request.StandardRequestDTO;
 import com.example.studentapi.standard.dto.Response.StandardResponseDTO;
 import com.example.studentapi.standard.service.StandardService;
@@ -9,9 +13,13 @@ import com.example.studentapi.subject.dto.Response.SubjectResponseDto;
 import com.example.studentapi.teacher.dto.Response.TeacherResponseDTO;
 import com.example.studentapi.utils.ApiResponse;
 import com.example.studentapi.utils.ResponseSender;
+import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +28,11 @@ import java.util.List;
 public class StandardController {
     @Autowired
     private StandardService standardService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private UserRepository userRepository;
+
 
     @GetMapping("/allStandard")
     public ResponseEntity<Object> getAllStandard() {
@@ -39,21 +52,30 @@ public class StandardController {
             return ResponseSender.send(apiResponse);
         }
     }
-
+    @RolesAllowed("ROLE_HEADMASTER")
     @PostMapping("/addStandards")
-    public ResponseEntity<Object> createStandard(@RequestBody StandardRequestDTO standardRequestDTO) {
+    public ResponseEntity<Object> addStandards(@RequestBody StandardRequestDTO standardRequestDTO) {
         try {
-            StandardResponseDTO responseDTO = standardService.saveStandard(standardRequestDTO);
+            UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            User headmaster = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new UsernameNotFoundException("User with email " + userDetails.getUsername() + " not found."));
+            StandardResponseDTO responseDTO = standardService.addStandard( standardRequestDTO,headmaster);
             ApiResponse apiResponse = ApiResponse.builder()
                     .message("Standard saved successfully")
                     .data(responseDTO)
                     .statusCode(HttpStatus.CREATED.value())
                     .build();
             return ResponseSender.send(apiResponse);
-        } catch (Exception e) {
+        }
+        catch (ValidationException e) {
+            ApiResponse apiResponse = ApiResponse.builder()
+                    .message(e.getMessage())
+                    .statusCode(HttpStatus.BAD_REQUEST.value())
+                    .build();
+            return ResponseSender.send(apiResponse);
+        }catch (Exception e) {
             ApiResponse apiResponse = ApiResponse.builder()
                     .message("Something went wrong")
-                    .devMessage(e.getMessage())
                     .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
                     .build();
             return ResponseSender.send(apiResponse);
@@ -148,7 +170,6 @@ public class StandardController {
             return ResponseSender.send(apiResponse);
         }
     }
-
 
 
 }

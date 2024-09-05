@@ -1,5 +1,6 @@
 package com.example.studentapi.teacher.entity;
 
+import com.example.studentapi.signupAndLogin.entity.User;
 import com.example.studentapi.standard.entity.Standard;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
@@ -29,6 +30,10 @@ public class Teacher {
 
     @Column(name = "teacher_address")
     private String address;
+
+    @ManyToOne
+    @JoinColumn(name = "headmaster_id")
+    private User headmaster;
 
 //    @ManyToOne(fetch = FetchType.EAGER)
 //    @JoinColumn(name = "class_id")

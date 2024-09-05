@@ -1,6 +1,10 @@
 package com.example.studentapi.student.service;
 
 import com.example.studentapi.exceptions.StudentNotFoundException;
+import com.example.studentapi.signupAndLogin.configuration.JwtService;
+import com.example.studentapi.signupAndLogin.entity.User;
+import com.example.studentapi.signupAndLogin.repository.UserRepository;
+import com.example.studentapi.signupAndLogin.service.UserService;
 import com.example.studentapi.standard.entity.Standard;
 import com.example.studentapi.standard.repository.StandardRepository;
 import com.example.studentapi.student.dto.groupStudents.GroupStudents;
@@ -13,14 +17,12 @@ import com.example.studentapi.student.specifications.StudentSpecification;
 import com.example.studentapi.utils.StudentExcelExporter;
 import jakarta.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -31,7 +33,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -40,11 +45,17 @@ public class StudentService implements IStudentService {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     private static final Pattern PHONE_PATTERN = Pattern.compile("\\d{10}");
+    private final String uploadDir = "uploads_temp/";
     @Autowired
     private StudentRepository studentRepository;
     @Autowired
     private StandardRepository standardRepository;
-    private final String uploadDir="uploads_temp/";
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private JwtService jwtService;
+    @Autowired
+    private UserRepository userRepository;
 
     @Override
     public List<StudentResponseDTO> getAllStudents() {
@@ -57,16 +68,71 @@ public class StudentService implements IStudentService {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public StudentResponseDTO saveStudent(StudentRequestDTO studentRequestDTO) {
-        validateStudentRequestDTO(studentRequestDTO);
+
+
+//    @Override
+//    public StudentResponseDTO saveStudent(StudentRequestDTO studentRequestDTO) {
+//
+//
+//        validateStudentRequestDTO(studentRequestDTO);
+//        Standard standard = standardRepository.findById(studentRequestDTO.getStandardId())
+//                .orElseThrow(() -> new ValidationException("Standard not found with id: " + studentRequestDTO.getStandardId()));
+//        Student student = StudentMapper.toEntity(studentRequestDTO);
+//        student.setStandard(standard);
+////        student.setTeacher(teacher);
+//        Student savedStudent = studentRepository.save(student);
+//        return StudentMapper.toResponseDTO(savedStudent);
+//    }
+
+
+//    @Override
+//    public StudentResponseDTO addStudent(String authHeader, StudentRequestDTO studentRequestDTO) {
+//        validateStudentRequestDTO(studentRequestDTO);
+//        String token = authHeader.substring(7);
+//        String email = jwtService.extractUsername(token);
+//
+//        String role = userService.getUserRoleByEmail(email);
+//
+//        if (!"TEACHER".equalsIgnoreCase(role)) {
+//            throw new UnauthorizedActionException("Only teachers can add students.");
+//        }
+//
+//        User teacher = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+//
+//        Student student = StudentMapper.tosaveStudentEntity(studentRequestDTO, teacher);
+//        Student savedStudent = studentRepository.save(student);
+//        return StudentMapper.toResponseDTO(savedStudent);
+//    }
+
+@Override
+    public StudentResponseDTO addStudent(StudentRequestDTO studentRequestDTO, User teacher) {
+    validateStudentRequestDTO(studentRequestDTO);
         Standard standard = standardRepository.findById(studentRequestDTO.getStandardId())
                 .orElseThrow(() -> new ValidationException("Standard not found with id: " + studentRequestDTO.getStandardId()));
         Student student = StudentMapper.toEntity(studentRequestDTO);
         student.setStandard(standard);
+        student.setTeacher(teacher);
         Student savedStudent = studentRepository.save(student);
         return StudentMapper.toResponseDTO(savedStudent);
     }
+
+
+
+//@Override
+//    public StudentResponseDTO addStudent(StudentRequestDTO studentRequestDTO, String teacherEmail) {
+//        Optional<User> optionalTeacher = userRepository.findByEmail(teacherEmail);
+//        User teacher = optionalTeacher.orElseThrow(() -> new UsernameNotFoundException("User with email " + teacherEmail + " not found."));
+////
+//        if (!"ROLE_TEACHER".equalsIgnoreCase(teacher.getRole())) {
+//            throw new AccessDeniedException("User with email " + teacherEmail + " is not authorized to add students.");
+//        }
+//
+//        Student student = StudentMapper.toEntity(studentRequestDTO);
+//        student.setTeacher(teacher);
+//        Student savedStudent = studentRepository.save(student);
+//        return StudentMapper.toResponseDTO(savedStudent);
+//    }
 
     @Override
     public Optional<StudentResponseDTO> getStudentByEmail(String email) {
@@ -87,7 +153,6 @@ public class StudentService implements IStudentService {
         return Optional.ofNullable(studentRepository.findById(id)
                 .map(StudentMapper::toResponseDTO)
                 .orElseThrow(() -> new StudentNotFoundException("Student not found with id: " + id)));
-
     }
 
     @Override
@@ -109,24 +174,24 @@ public class StudentService implements IStudentService {
         studentRepository.deleteById(id);
     }
 
-    @Override
-    public StudentResponseDTO updateUser(StudentRequestDTO studentRequestDTO, int id) {
-        if (!studentRepository.existsById(id)) {
-            throw new StudentNotFoundException("Student not found with ID: " + id);
-        }
-
-        Standard standard = standardRepository.findById(studentRequestDTO.getStandardId())
-                .orElseThrow(() -> new ValidationException("Standard not found with id: " + studentRequestDTO.getStandardId()));
-
-        Student existingStudent = studentRepository.findById(id)
-                .orElseThrow(() -> new StudentNotFoundException("Student not found with ID: " + id));
-
-        Student updatedStudent = StudentMapper.toEntity(studentRequestDTO);
-        updatedStudent.setId(id);
-        updatedStudent.setStandard(standard);
-        Student savedStudent = studentRepository.save(updatedStudent);
-        return StudentMapper.toResponseDTO(savedStudent);
-    }
+//    @Override
+//    public StudentResponseDTO updateUser(StudentRequestDTO studentRequestDTO, int id) {
+//        if (!studentRepository.existsById(id)) {
+//            throw new StudentNotFoundException("Student not found with ID: " + id);
+//        }
+//
+//        Standard standard = standardRepository.findById(studentRequestDTO.getStandardId())
+//                .orElseThrow(() -> new ValidationException("Standard not found with id: " + studentRequestDTO.getStandardId()));
+//
+//        Student existingStudent = studentRepository.findById(id)
+//                .orElseThrow(() -> new StudentNotFoundException("Student not found with ID: " + id));
+//
+//        Student updatedStudent = StudentMapper.toEntity(studentRequestDTO);
+//        updatedStudent.setId(id);
+//        updatedStudent.setStandard(standard);
+//        Student savedStudent = studentRepository.save(updatedStudent);
+//        return StudentMapper.toResponseDTO(savedStudent);
+//    }
 
     @Override
     public boolean checkIfStudentExists(int id) {
@@ -207,7 +272,7 @@ public class StudentService implements IStudentService {
         DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
         String currentDateTime = dateFormatter.format(new Date());
 
-        String fileName = "students_" +currentDateTime + ".xlsx";
+        String fileName = "students_" + currentDateTime + ".xlsx";
         Path filePath = Paths.get(uploadDir, fileName);
         var signeFileLocation = String.valueOf(Paths.get(System.getProperty("user.dir"), readFilePath(fileName, true)));
 
@@ -221,7 +286,8 @@ public class StudentService implements IStudentService {
 
         return fileName;
     }
-    public  String readFilePath(String fileName, boolean isRead) throws IOException {
+
+    public String readFilePath(String fileName, boolean isRead) throws IOException {
         Path pathToFile = Paths.get(uploadDir);
         if (!isRead) {
             Files.createDirectories(pathToFile);

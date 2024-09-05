@@ -2,6 +2,10 @@
 package com.example.studentapi.standard.service;
 
 import com.example.studentapi.exceptions.StandardNotFoundException;
+import com.example.studentapi.signupAndLogin.configuration.JwtService;
+import com.example.studentapi.signupAndLogin.entity.User;
+import com.example.studentapi.signupAndLogin.repository.UserRepository;
+import com.example.studentapi.signupAndLogin.service.UserService;
 import com.example.studentapi.standard.dto.Mapper.StandardMapper;
 import com.example.studentapi.standard.dto.Request.StandardRequestDTO;
 import com.example.studentapi.standard.dto.Response.StandardResponseDTO;
@@ -16,6 +20,7 @@ import com.example.studentapi.teacher.dto.Response.TeacherResponseDTO;
 import com.example.studentapi.teacher.entity.Teacher;
 import com.example.studentapi.teacher.repository.TeacherRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -34,8 +39,38 @@ public class StandardService implements IStandardService {
     @Autowired
     private SubjectRepository subjectRepository;
 
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
+//    @Override
+//    public StandardResponseDTO saveStandard(StandardRequestDTO standardRequestDTO) {
+//        Standard standard = StandardMapper.toEntity(standardRequestDTO);
+//
+//        if (standardRequestDTO.getSubjectIds() != null && !standardRequestDTO.getSubjectIds().isEmpty()) {
+//            List<Subject> subjects = subjectRepository.findAllById(standardRequestDTO.getSubjectIds());
+//            standard.setSubjects(subjects);
+//        }
+//
+//        if (standardRequestDTO.getTeacherIds() != null && !standardRequestDTO.getTeacherIds().isEmpty()) {
+//            List<Teacher> teachers = teacherRepository.findAllById(standardRequestDTO.getTeacherIds());
+//            standard.setTeachers(teachers);
+//        }
+//
+//        Standard savedStandard = standardRepository.save(standard);
+//        return StandardMapper.toResponseDTO(savedStandard);
+//    }
+
+
+
+
     @Override
-    public StandardResponseDTO saveStandard(StandardRequestDTO standardRequestDTO) {
+    public StandardResponseDTO addStandard(StandardRequestDTO standardRequestDTO, User headmaster) {
+
         Standard standard = StandardMapper.toEntity(standardRequestDTO);
 
         if (standardRequestDTO.getSubjectIds() != null && !standardRequestDTO.getSubjectIds().isEmpty()) {
@@ -47,7 +82,7 @@ public class StandardService implements IStandardService {
             List<Teacher> teachers = teacherRepository.findAllById(standardRequestDTO.getTeacherIds());
             standard.setTeachers(teachers);
         }
-
+        standard.setHeadmaster(headmaster);
         Standard savedStandard = standardRepository.save(standard);
         return StandardMapper.toResponseDTO(savedStandard);
     }
@@ -112,6 +147,16 @@ public class StandardService implements IStandardService {
         return standards.stream()
                 .map(StandardMapper::toResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public StandardResponseDTO saveStandard(StandardRequestDTO standardRequestDTO) {
+        return null;
+    }
+
+    @Override
+    public StandardResponseDTO addStandard(String authHeader, StandardRequestDTO standardRequestDTO) {
+        return null;
     }
 
     @Override

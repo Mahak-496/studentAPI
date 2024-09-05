@@ -1,5 +1,6 @@
 package com.example.studentapi.standard.service;
 
+import com.example.studentapi.signupAndLogin.entity.User;
 import com.example.studentapi.standard.dto.Request.StandardRequestDTO;
 import com.example.studentapi.standard.dto.Response.StandardResponseDTO;
 import com.example.studentapi.subject.dto.Response.SubjectResponseDto;
@@ -12,6 +13,10 @@ public interface IStandardService {
     List<StandardResponseDTO> getAllStandardDetails();
 
     StandardResponseDTO saveStandard(StandardRequestDTO standardRequestDTO);
+
+    StandardResponseDTO addStandard(String authHeader, StandardRequestDTO standardRequestDTO);
+
+    StandardResponseDTO addStandard(StandardRequestDTO standardRequestDTO, User headmaster);
 
     void deleteStandard(int id);
 

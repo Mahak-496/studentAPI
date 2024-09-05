@@ -2,6 +2,10 @@ package com.example.studentapi.student.controller;
 
 import com.example.studentapi.exceptions.StudentNotFoundException;
 import com.example.studentapi.exceptions.ValidationException;
+import com.example.studentapi.signupAndLogin.configuration.JwtService;
+import com.example.studentapi.signupAndLogin.entity.User;
+import com.example.studentapi.signupAndLogin.repository.UserRepository;
+import com.example.studentapi.signupAndLogin.service.UserService;
 import com.example.studentapi.student.dto.groupStudents.GroupStudents;
 import com.example.studentapi.student.dto.request.StudentRequestDTO;
 import com.example.studentapi.student.dto.response.StudentResponseDTO;
@@ -9,15 +13,16 @@ import com.example.studentapi.student.service.StudentService;
 import com.example.studentapi.utils.ApiResponse;
 import com.example.studentapi.utils.CsvFileGenerator;
 import com.example.studentapi.utils.ResponseSender;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -28,11 +33,17 @@ import java.util.Optional;
 
 public class StudentController {
 
+    private final String uploadDir = "uploads_temp/";
     @Autowired
     private StudentService studentService;
     @Autowired
     private CsvFileGenerator csvFileGenerator;
-    private final String uploadDir="uploads_temp/";
+    @Autowired
+    private JwtService jwtService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private UserRepository userRepository;
 
     @GetMapping("/allStudents")
     public ResponseEntity<Object> getAllStudents() {
@@ -53,17 +64,59 @@ public class StudentController {
         }
     }
 
-    @PostMapping("/addStudents")
-    public ResponseEntity<Object> createStudent(@Valid @RequestBody StudentRequestDTO studentRequestDTO) {
+
+//    @RolesAllowed("TEACHER")
+//    @PostMapping("/addStudents")
+//    public ResponseEntity<Object> createStudent(@RequestHeader("Authorization") String authHeader,
+//                                                @Valid @RequestBody StudentRequestDTO studentRequestDTO) {
+//        try {
+//            StudentResponseDTO responseDTO = studentService.addStudent(authHeader, studentRequestDTO);
+//            ApiResponse apiResponse = ApiResponse.builder()
+//                    .message("Student saved successfully")
+//                    .data(responseDTO)
+//                    .statusCode(HttpStatus.CREATED.value())
+//                    .build();
+//            return ResponseSender.send(apiResponse);
+//        } catch (ValidationException e) {
+//            ApiResponse apiResponse = ApiResponse.builder()
+//                    .message(e.getMessage())
+//                    .statusCode(HttpStatus.FORBIDDEN.value())
+//                    .build();
+//            return ResponseSender.send(apiResponse);
+//        } catch (UnauthorizedActionException e) {
+//            ApiResponse apiResponse = ApiResponse.builder()
+//                    .message(e.getMessage())
+//                    .statusCode(HttpStatus.FORBIDDEN.value())
+//                    .build();
+//            return ResponseSender.send(apiResponse);
+//        } catch (Exception e) {
+//            ApiResponse apiResponse = ApiResponse.builder()
+//                    .message("Something went wrong")
+//                    .devMessage(e.getMessage())
+//                    .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+//                    .build();
+//            return ResponseSender.send(apiResponse);
+//        }
+//    }
+
+    @RolesAllowed("ROLE_TEACHER")
+    @PostMapping("/add")
+    public ResponseEntity<Object> addStudent(@RequestBody StudentRequestDTO studentRequestDTO) {
         try {
-            StudentResponseDTO responseDTO = studentService.saveStudent(studentRequestDTO);
+            UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            User teacher = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new UsernameNotFoundException("User with email " + userDetails.getUsername() + " not found."));
+
+            StudentResponseDTO addedStudent = studentService.addStudent(studentRequestDTO, teacher);
+
             ApiResponse apiResponse = ApiResponse.builder()
-                    .message("Student saved successfully")
-                    .data(responseDTO)
+                    .message("Student added successfully")
+                    .data(addedStudent)
                     .statusCode(HttpStatus.CREATED.value())
                     .build();
             return ResponseSender.send(apiResponse);
-        } catch (ValidationException e) {
+
+        }  catch (ValidationException e) {
             ApiResponse apiResponse = ApiResponse.builder()
                     .message(e.getMessage())
                     .statusCode(HttpStatus.BAD_REQUEST.value())
@@ -71,13 +124,14 @@ public class StudentController {
             return ResponseSender.send(apiResponse);
         } catch (Exception e) {
             ApiResponse apiResponse = ApiResponse.builder()
-                    .message("Something went wrong")
-                    .devMessage(e.getMessage())
+                    .message("An error occurred: User with this email already exist " )
                     .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
                     .build();
             return ResponseSender.send(apiResponse);
         }
     }
+
+
 
     @GetMapping("/getstudents/email/{email}")
     public ResponseEntity<Object> getStudentByEmail(@PathVariable String email) {
@@ -256,25 +310,25 @@ public class StudentController {
         }
     }
 
-    @PutMapping("/UpdateStudent/{id}")
-    public ResponseEntity<Object> updateUser(@PathVariable("id") int id, @RequestBody StudentRequestDTO studentRequestDTO) {
-        ApiResponse apiResponse;
-
-        try {
-            StudentResponseDTO updatedUser = studentService.updateUser(studentRequestDTO, id);
-            apiResponse = ApiResponse.builder()
-                    .message("Students updated successfully using ID")
-                    .statusCode(200)
-                    .build();
-            return ResponseSender.send(apiResponse);
-        } catch (StudentNotFoundException e) {
-            apiResponse = ApiResponse.builder()
-                    .message(e.getMessage())
-                    .statusCode(HttpStatus.BAD_REQUEST.value())
-                    .build();
-            return ResponseSender.send(apiResponse);
-        }
-    }
+//    @PutMapping("/UpdateStudent/{id}")
+//    public ResponseEntity<Object> updateUser(@PathVariable("id") int id, @RequestBody StudentRequestDTO studentRequestDTO) {
+//        ApiResponse apiResponse;
+//
+//        try {
+//            StudentResponseDTO updatedUser = studentService.updateUser(studentRequestDTO, id);
+//            apiResponse = ApiResponse.builder()
+//                    .message("Students updated successfully using ID")
+//                    .statusCode(200)
+//                    .build();
+//            return ResponseSender.send(apiResponse);
+//        } catch (StudentNotFoundException e) {
+//            apiResponse = ApiResponse.builder()
+//                    .message(e.getMessage())
+//                    .statusCode(HttpStatus.BAD_REQUEST.value())
+//                    .build();
+//            return ResponseSender.send(apiResponse);
+//        }
+//    }
 
     @DeleteMapping("/deleteStudent/{id}")
     public ResponseEntity<Object> deleteStudent(@PathVariable("id") int id) {
@@ -312,7 +366,7 @@ public class StudentController {
         try {
             String fileName = studentService.generateAndSaveExcel();
             String fileUrl = "http://localhost:9090/files/" + fileName;
-            System.out.println("file url is"+fileUrl);
+            System.out.println("file url is" + fileUrl);
 
             ApiResponse apiResponse = ApiResponse.builder()
                     .message("Excel file generated successfully.")
@@ -326,7 +380,8 @@ public class StudentController {
                     .message("Error occurred while generating Excel file.")
                     .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
                     .build();
-            return ResponseSender.send(apiResponse);        }
+            return ResponseSender.send(apiResponse);
+        }
     }
 
   /*  @GetMapping("students/files/{filename}")

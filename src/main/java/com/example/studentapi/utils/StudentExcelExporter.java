@@ -1,10 +1,8 @@
 package com.example.studentapi.utils;
-
 import com.example.studentapi.student.entity.Student;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashSet;
@@ -13,9 +11,9 @@ import java.util.Set;
 
 public class StudentExcelExporter {
 
-    private XSSFWorkbook workbook;
-    private Sheet sheet;
-    private List<Student> students;
+    private final XSSFWorkbook workbook;
+    private final Sheet sheet;
+    private final List<Student> students;
 
     public StudentExcelExporter(List<Student> students) {
         this.students = students;
@@ -33,7 +31,7 @@ public class StudentExcelExporter {
         style.setAlignment(HorizontalAlignment.CENTER);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
 
-       sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 5));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 5));
 
         createCell(titleRow, 0, "Student Details", style);
     }

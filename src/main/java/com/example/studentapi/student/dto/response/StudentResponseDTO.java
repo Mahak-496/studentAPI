@@ -16,9 +16,5 @@ public class StudentResponseDTO {
     private String school;
     private String subjects;
     private StandardResponseDTO standard;
-//    private String standardName;
-//    private String standardDescription;
-//    private String TeacherName;
-
 
 }

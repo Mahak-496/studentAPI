@@ -1,5 +1,6 @@
 package com.example.studentapi.student.entity;
 
+import com.example.studentapi.signupAndLogin.entity.User;
 import com.example.studentapi.standard.entity.Standard;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -51,6 +52,11 @@ public class Student {
     @OneToOne
     @JoinColumn(name = "standard_id")
     private Standard standard;
+
+
+    @ManyToOne
+    @JoinColumn(name = "teacher_id")
+    private User teacher;
 
     @CreationTimestamp
     private Timestamp createdOn;

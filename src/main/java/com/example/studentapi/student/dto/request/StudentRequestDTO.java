@@ -21,5 +21,7 @@ public class StudentRequestDTO {
     private String subjects;
     private int standardId;
 
+//    private int teacherId;
+
 
 }

@@ -1,6 +1,10 @@
 package com.example.studentapi.teacher.service;
 
 import com.example.studentapi.exceptions.TeacherNotFoundException;
+import com.example.studentapi.signupAndLogin.configuration.JwtService;
+import com.example.studentapi.signupAndLogin.entity.User;
+import com.example.studentapi.signupAndLogin.repository.UserRepository;
+import com.example.studentapi.signupAndLogin.service.UserService;
 import com.example.studentapi.standard.entity.Standard;
 import com.example.studentapi.standard.repository.StandardRepository;
 import com.example.studentapi.teacher.dto.Mapper.TeacherMapper;
@@ -20,6 +24,13 @@ public class TeacherService implements ITeacherService {
     private TeacherRepository teacherRepository;
     @Autowired
     private StandardRepository standardRepository;
+    @Autowired
+    private JwtService jwtService;
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public List<TeacherResponseDTO> getAllTeacherDetails() {
@@ -32,13 +43,28 @@ public class TeacherService implements ITeacherService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public TeacherResponseDTO addTeacher(String authHeader, TeacherRequestDTO teacherRequestDTO) {
+        return null;
+    }
+
+
+//    @Override
+//    public TeacherResponseDTO saveTeacher(TeacherRequestDTO teacherRequestDTO) {
+//        Teacher teacher = TeacherMapper.toEntity(teacherRequestDTO);
+//        Teacher savedTeacher = teacherRepository.save(teacher);
+//        return TeacherMapper.toResponseDTO(savedTeacher);
+//    }
+
 
     @Override
-    public TeacherResponseDTO saveTeacher(TeacherRequestDTO teacherRequestDTO) {
-        Teacher teacher = TeacherMapper.toEntity(teacherRequestDTO);
+    public TeacherResponseDTO addTeacher(TeacherRequestDTO teacherRequestDTO, User headmaster) {
+        Teacher teacher = TeacherMapper.tosaveTeacherEntity(teacherRequestDTO,headmaster);
+        teacher.setHeadmaster(headmaster);
         Teacher savedTeacher = teacherRepository.save(teacher);
         return TeacherMapper.toResponseDTO(savedTeacher);
     }
+
 
     @Override
     public void deleteTeacher(int id) {
